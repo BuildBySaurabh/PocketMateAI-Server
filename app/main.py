@@ -128,3 +128,5 @@ def create_app(
         return ChatResponse(reply=reply, web_search_used=web_used)
 
     return app
+
+app = create_app()
