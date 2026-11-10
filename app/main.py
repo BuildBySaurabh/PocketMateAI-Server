@@ -129,4 +129,15 @@ def create_app(
 
     return app
 
-app = create_app()
+
+def __getattr__(name: str):
+    """Lets hosts that run `uvicorn app.main:app` (for example Render's default) work too.
+
+    The app is built on first use, so importing this module (tests, tools) never needs the server settings.
+    The command `uvicorn app.main:create_app --factory` keeps working as before.
+    """
+    if name == "app":
+        built = create_app()
+        globals()["app"] = built
+        return built
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
