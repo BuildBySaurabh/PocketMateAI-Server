@@ -1,9 +1,14 @@
 from typing import List, Optional
 
+import logging
+
 import httpx
 
 from app.ai.base import AIProvider, ChatExtras, ProviderError, build_system_prompt, drop_leading_assistant_messages
 from app.schemas.chat import ChatMessage
+
+
+log = logging.getLogger("pocketmate.ai")
 
 
 class OpenAICompatProvider(AIProvider):
@@ -38,6 +43,9 @@ class OpenAICompatProvider(AIProvider):
         except httpx.HTTPError:
             raise ProviderError("server_error", "Could not reach the AI service.", 502)
 
+        if resp.status_code != 200:
+            # Shown in the server log only (never sent to the app) so you can see why the AI service refused.
+            log.warning("AI service answered %s: %s", resp.status_code, resp.text[:300].replace("\n", " "))
         if resp.status_code == 429:
             raise ProviderError("rate_limited", "The AI service is busy. Try again shortly.", 429)
         if resp.status_code in (404, 529) or resp.status_code >= 500:
